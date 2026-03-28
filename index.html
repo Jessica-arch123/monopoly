@@ -3,61 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaPoly: Chemistry Edition</title>
+    <title>PharmaPoly: Neon Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #6c5ce7; --accent: #00b894; --bg: #f0f2f5; --gold: #fdcb6e; --pink: #fd79a8; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; }
-        .game-container { background: white; width: 100%; max-width: 500px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); overflow: hidden; position: relative; border: 5px solid #333; }
+        :root { --primary: #6c5ce7; --accent: #00d2d3; --bg: #0f172a; --card: rgba(255, 255, 255, 0.1); --gold: #feca57; --pink: #ff9ff3; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; padding: 10px; margin: 0; min-height: 100vh; }
         
-        /* The Board Track */
+        .game-container { background: #1e293b; width: 100%; max-width: 480px; border-radius: 40px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        
+        /* Neon Board Layout */
         .board-track { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            grid-template-rows: repeat(4, 1fr); 
-            gap: 5px; 
-            padding: 15px; 
-            background: #2d3436; 
-            height: 350px;
+            display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); 
+            gap: 10px; padding: 20px; background: rgba(0,0,0,0.2); height: 380px; position: relative;
         }
         .tile { 
-            background: white; 
-            border-radius: 8px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 0.8rem; 
-            font-weight: bold; 
-            position: relative; 
-            color: #333;
-            text-align: center;
-            border-bottom: 4px solid #ddd;
+            background: var(--card); backdrop-filter: blur(10px); border-radius: 15px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            font-size: 0.75rem; font-weight: 700; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.4s; text-align: center;
         }
-        .tile-active { border-color: var(--primary); background: #efedff; transform: scale(1.05); z-index: 5; }
+        .tile-active { background: var(--primary); color: white; box-shadow: 0 0 20px var(--primary); border: none; transform: scale(1.05); }
         .tile-start { background: var(--accent); color: white; }
-        
-        /* Mascot Piece */
-        #playerPiece { 
-            position: absolute; 
-            font-size: 2rem; 
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 10;
-            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
-        }
 
-        .center-ui { padding: 20px; text-align: center; background: #fff; }
-        .stats-bar { display: flex; justify-content: space-around; background: #f9f9f9; padding: 10px; font-weight: 800; border-top: 2px solid #eee; }
+        /* Animated Player Piece */
+        #playerPiece { 
+            position: absolute; font-size: 2.5rem; z-index: 100;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+            animation: bounce 2s infinite ease-in-out;
+        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* Central UI */
+        .center-ui { padding: 30px 20px; text-align: center; border-radius: 40px 40px 0 0; background: #1e293b; margin-top: -20px; position: relative; z-index: 10; }
+        .btn-roll { 
+            background: linear-gradient(135deg, var(--primary), #a29bfe); 
+            width: 80%; padding: 18px; border: none; border-radius: 20px; color: white; 
+            font-weight: 900; font-size: 1.2rem; cursor: pointer; letter-spacing: 2px;
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3); transition: 0.3s;
+        }
+        .btn-roll:active { transform: scale(0.95); }
+
+        /* Stats Bar */
+        .stats-bar { display: flex; justify-content: space-around; padding: 20px; background: rgba(0,0,0,0.3); font-size: 0.9rem; font-weight: 700; color: var(--accent); }
         
+        /* Question Overlay */
         .question-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; box-sizing: border-box;
+            background: rgba(15, 23, 42, 0.95); display: none; align-items: center; justify-content: center; z-index: 1000;
         }
-        .q-card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; }
+        .q-card { background: #1e293b; padding: 30px; border-radius: 30px; width: 90%; max-width: 400px; border: 1px solid var(--primary); text-align: center; }
+        .btn-mcq { background: var(--card); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 10px; width: 100%; cursor: pointer; font-family: 'Outfit'; font-weight: 700; transition: 0.3s; }
+        .btn-mcq:hover { background: var(--primary); }
 
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
-        .btn-roll { background: var(--primary); font-size: 1.2rem; box-shadow: 0 5px 0 #4834d4; }
-        .btn-mcq { background: #f1f2f6; color: var(--primary); border: 2px solid var(--primary); }
-        
-        .badge { font-size: 0.7rem; background: var(--gold); padding: 2px 5px; border-radius: 5px; position: absolute; top: -5px; }
         sub, sup { font-size: 0.7em; }
     </style>
 </head>
@@ -68,43 +66,43 @@
         <div class="tile tile-start" id="t0">GO</div>
         <div class="tile" id="t1">SO<sub>2</sub></div>
         <div class="tile" id="t2">NaOH</div>
-        <div class="tile" id="t3">CHANCE</div>
+        <div class="tile" id="t3" style="color:var(--pink)">CHANCE</div>
         <div class="tile" id="t11">Ag<sup>+</sup></div>
-        <div style="grid-column: span 2; grid-row: span 2; display:flex; align-items:center; justify-content:center;">
-             <img src="https://cdn-icons-png.flaticon.com/512/3022/3022607.png" width="80" style="opacity:0.2">
+        <div style="grid-column: span 2; grid-row: span 2; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+             <span style="font-size:3rem; opacity:0.3">🧪</span>
+             <small style="opacity:0.3; letter-spacing:2px">PHARMAPOLY</small>
         </div>
         <div class="tile" id="t4">PCl<sub>5</sub></div>
-        <div class="tile" id="t10">buffer</div>
+        <div class="tile" id="t10">Buffer</div>
         <div class="tile" id="t5">Ni(CO)<sub>4</sub></div>
         <div class="tile" id="t9">O<sub>2</sub><sup>+</sup></div>
         <div class="tile" id="t8">SF<sub>6</sub></div>
-        <div class="tile" id="t7">CHANCE</div>
+        <div class="tile" id="t7" style="color:var(--pink)">CHANCE</div>
         <div class="tile" id="t6">KOH</div>
         
         <div id="playerPiece">🐱</div>
     </div>
 
     <div class="center-ui">
-        <h3 id="tileTitle">Welcome to PharmaPoly!</h3>
-        <p id="tileDesc" style="font-size: 0.8rem; color: #666;">Roll the dice to move your mascot.</p>
-        <button class="btn btn-roll" onclick="rollDice()">🎲 ROLL DICE</button>
-        <div id="feedback" style="font-weight:bold; height: 20px;"></div>
+        <h2 id="tileTitle" style="margin:0; color:var(--accent)">PHASE: START</h2>
+        <p id="feedback" style="font-size: 0.9rem; color: #94a3b8; margin: 15px 0 25px 0; min-height: 20px;">Ready for research?</p>
+        <button class="btn-roll" onclick="rollDice()">ROLL DICE</button>
     </div>
 
     <div class="stats-bar">
-        <span>💰 BALANCE: <span id="score">0</span> pts</span>
-        <span>🎓 RANK: <span id="rank">Initiate</span></span>
+        <span>💰 <span id="score">0</span> PTS</span>
+        <span>💎 <span id="rank">INITIATE</span></span>
     </div>
 </div>
 
 <div class="question-overlay" id="qOverlay">
     <div class="q-card">
-        <h4 id="qType" style="color:var(--primary); margin:0;">RESEARCH TASK</h4>
-        <p id="qText" style="margin: 20px 0; font-weight: 500;"></p>
+        <h3 id="qTitle" style="color:var(--accent); margin-top:0;">DATA ANALYSIS</h3>
+        <p id="qText" style="line-height:1.6; font-size:1.1rem;"></p>
         <div id="optionsArea"></div>
         <div id="calcArea" style="display:none">
-            <input type="number" id="calcInput" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; text-align:center;">
-            <button class="btn btn-roll" style="margin-top:10px" onclick="checkCalc()">SUBMIT DATA</button>
+            <input type="number" id="calcInput" style="width:100%; padding:15px; border-radius:15px; background:var(--bg); border:1px solid #333; color:white; text-align:center; font-size:1.2rem;">
+            <button class="btn-roll" style="margin-top:20px; width:100%" onclick="checkCalc()">SUBMIT</button>
         </div>
     </div>
 </div>
@@ -113,10 +111,10 @@
     const boardItems = [
         { name: "GO", type: "start" },
         { name: "SO2 Lab", lvl: 1, type: "q" },
-        { name: "Acid Unit", lvl: 1, type: "q" },
+        { name: "NaOH Unit", lvl: 1, type: "q" },
         { name: "Grant Chance", type: "chance" },
-        { name: "Ni-Carbonyl", lvl: 2, type: "q" },
         { name: "PCl5 Orbit", lvl: 2, type: "q" },
+        { name: "Ni-Carbonyl", lvl: 2, type: "q" },
         { name: "KOH Station", lvl: 2, type: "q" },
         { name: "Scholarship", type: "chance" },
         { name: "SF6 Octa", lvl: 2, type: "q" },
@@ -133,10 +131,10 @@
         { lvl: 3, text: "Buffer: [A<sup>-</sup>]=0.5, [HA]=0.05, pK<sub>a</sub>=3.8. pH?", calc: () => 4.80 }
     ];
 
-    let state = { pos: 0, score: 0, pet: '🐱' };
+    let state = { pos: 0, score: 0 };
 
     function rollDice() {
-        const roll = Math.floor(Math.random() * 3) + 1; // 1-3 steps
+        const roll = Math.floor(Math.random() * 3) + 1;
         movePlayer(roll);
     }
 
@@ -148,27 +146,24 @@
 
     function updatePiece() {
         const tile = document.getElementById('t' + state.pos);
-        const rect = tile.getBoundingClientRect();
-        const boardRect = document.getElementById('board').getBoundingClientRect();
         const piece = document.getElementById('playerPiece');
-        
-        piece.style.left = (tile.offsetLeft + 10) + 'px';
-        piece.style.top = (tile.offsetTop + 10) + 'px';
-        
+        piece.style.left = (tile.offsetLeft + tile.offsetWidth/2 - 20) + 'px';
+        piece.style.top = (tile.offsetTop + tile.offsetHeight/2 - 25) + 'px';
         document.querySelectorAll('.tile').forEach(t => t.classList.remove('tile-active'));
         tile.classList.add('tile-active');
     }
 
     function handleLanding() {
         const land = boardItems[state.pos];
+        document.getElementById('tileTitle').innerText = land.name;
         if (land.type === "start") {
             state.score += 100;
-            document.getElementById('feedback').innerText = "Passed GO! Collected 100 PTS 🎓";
+            document.getElementById('feedback').innerText = "Passed GO! Grants +100 PTS 🎓";
             sync();
         } else if (land.type === "chance") {
             const win = Math.random() > 0.5;
             state.score += win ? 50 : -30;
-            document.getElementById('feedback').innerText = win ? "Research Grant! +50 PTS" : "Lab Spillage... -30 PTS";
+            document.getElementById('feedback').innerText = win ? "Research Grant! +50 PTS" : "Lab Spill... -30 PTS";
             sync();
         } else {
             showQuestion(land.lvl);
@@ -179,20 +174,17 @@
         const pool = questions.filter(q => q.lvl === lvl);
         const q = pool[Math.floor(Math.random() * pool.length)];
         window.currentQ = q;
-        
         document.getElementById('qText').innerHTML = q.text;
         document.getElementById('qOverlay').style.display = 'flex';
-        
         const optArea = document.getElementById('optionsArea');
         const calcArea = document.getElementById('calcArea');
         optArea.innerHTML = '';
-        
         if (q.isMCQ) {
             calcArea.style.display = 'none';
             optArea.style.display = 'block';
             q.options.forEach(opt => {
                 const b = document.createElement('button');
-                b.className = "btn btn-mcq"; b.innerHTML = opt;
+                b.className = "btn-mcq"; b.innerHTML = opt;
                 b.onclick = () => processAnswer(opt === q.correct);
                 optArea.appendChild(b);
             });
@@ -205,10 +197,10 @@
     function processAnswer(isCorrect) {
         if (isCorrect) {
             state.score += 50;
-            document.getElementById('feedback').innerText = "Correct! Property acquired. 🧪";
+            document.getElementById('feedback').innerText = "Correct Analysis! +50 PTS 🧪";
         } else {
             state.score -= 20;
-            document.getElementById('feedback').innerText = "Contamination! -20 PTS 💀";
+            document.getElementById('feedback').innerText = "Analysis Failed... -20 PTS 💀";
         }
         document.getElementById('qOverlay').style.display = 'none';
         sync();
@@ -222,14 +214,13 @@
 
     function sync() {
         document.getElementById('score').innerText = state.score;
-        let r = "Initiate";
-        if(state.score > 200) r = "Researcher";
-        if(state.score > 500) r = "Lab Manager";
+        let r = "INITIATE";
+        if(state.score > 200) r = "RESEARCHER";
+        if(state.score > 500) r = "LAB MANAGER";
         document.getElementById('rank').innerText = r;
     }
 
-    // Initialize piece position
-    updatePiece();
+    window.onload = updatePiece;
 </script>
 </body>
 </html>

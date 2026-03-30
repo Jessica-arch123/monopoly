@@ -7,44 +7,50 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #6c5ce7; --accent: #00d2d3; --bg: #0f172a; --card: rgba(255, 255, 255, 0.1); --gold: #feca57; --pink: #ff9ff3; }
-        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; padding: 10px; margin: 0; min-height: 100vh; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; padding: 10px; margin: 0; min-height: 100vh; overflow-x: hidden; }
         
         .game-container { background: #1e293b; width: 100%; max-width: 500px; border-radius: 40px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); position: relative; }
         
-        /* Lobby */
+        /* Lobby Styles */
         .lobby-screen { padding: 30px; text-align: center; }
         .brand-sub { color: var(--accent); letter-spacing: 3px; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; display: block; }
         .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
         .char-card { background: var(--card); padding: 15px; border-radius: 20px; border: 2px solid transparent; cursor: pointer; transition: 0.3s; }
         .char-card.selected { border-color: var(--accent); background: rgba(0, 210, 211, 0.2); }
 
-        /* Board */
+        /* Board Styles */
         .game-screen { display: none; }
         .board-track { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 8px; padding: 15px; background: rgba(0,0,0,0.2); height: 360px; position: relative; }
         .tile { background: var(--card); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.05); text-align: center; padding: 2px; }
         .player-piece { position: absolute; font-size: 1.8rem; z-index: 100; transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); filter: drop-shadow(0 0 8px black); pointer-events: none; }
 
+        /* UI & Dice */
         .center-ui { padding: 20px; text-align: center; background: #1e293b; border-top: 1px solid rgba(255,255,255,0.1); }
-        .dice-container { perspective: 1000px; width: 50px; height: 50px; margin: 0 auto 10px; cursor: pointer; }
-        .dice { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s; }
-        .dice-face { position: absolute; width: 50px; height: 50px; background: white; border: 2px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 900; font-size: 1.2rem; }
-        .face-1 { transform: translateZ(25px); } .face-2 { transform: rotateY(180deg) translateZ(25px); } .face-3 { transform: rotateY(-90deg) translateZ(25px); }
+        .dice-container { perspective: 1000px; width: 60px; height: 60px; margin: 0 auto 15px; cursor: pointer; }
+        .dice { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s ease-out; }
+        .dice-face { position: absolute; width: 60px; height: 60px; background: white; border: 2px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 900; font-size: 1.5rem; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
+        
+        /* Fixed 3D Mapping */
+        .face-1 { transform: translateZ(30px); } 
+        .face-2 { transform: rotateY(180deg) translateZ(30px); } 
+        .face-3 { transform: rotateY(90deg) translateZ(30px); } 
+
         .rolling { animation: spin 0.2s infinite linear; }
         @keyframes spin { from { transform: rotateX(0deg) rotateY(0deg); } to { transform: rotateX(360deg) rotateY(360deg); } }
 
         .btn { width: 100%; padding: 15px; border: none; border-radius: 15px; color: white; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
         .btn-start { background: var(--accent); box-shadow: 0 5px 0 #009e9f; }
-        .btn-start:disabled { background: #4b5563; box-shadow: none; cursor: not-allowed; }
-        .btn-roll { background: var(--primary); width: 70%; box-shadow: 0 5px 0 #4834d4; }
-        .btn-hint { background: var(--gold); color: #333; margin-bottom: 10px; font-size: 0.8rem; padding: 10px; }
+        .btn-start:disabled { background: #4b5563; box-shadow: none; opacity: 0.5; }
+        .btn-roll { background: var(--primary); width: 80%; box-shadow: 0 5px 0 #4834d4; }
+        .btn-hint { background: var(--gold); color: #333; margin-bottom: 12px; font-size: 0.8rem; padding: 10px; border-radius: 10px; }
         
-        /* Overlays */
+        /* Overlay */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
-        .q-card { background: #1e293b; padding: 25px; border-radius: 30px; width: 100%; max-width: 400px; border: 2px solid var(--primary); text-align: center; }
-        .btn-mcq { background: var(--card); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; margin-bottom: 8px; width: 100%; cursor: pointer; font-family: 'Outfit'; font-weight: 700; }
-        .btn-mcq:hover { background: var(--primary); }
+        .q-card { background: #1e293b; padding: 30px; border-radius: 35px; width: 100%; max-width: 420px; border: 2px solid var(--primary); text-align: center; }
+        .btn-mcq { background: var(--card); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 14px; border-radius: 15px; margin-bottom: 10px; width: 100%; cursor: pointer; font-family: 'Outfit'; font-weight: 700; font-size: 0.95rem; text-align: left; padding-left: 20px; }
+        .btn-mcq:hover { background: var(--primary); border-color: white; }
         
-        .p-stat { text-align: center; padding: 8px; opacity: 0.4; font-size: 0.75rem; }
+        .p-stat { text-align: center; padding: 10px; opacity: 0.4; }
         .p-stat.active-turn { opacity: 1; color: var(--accent); transform: scale(1.1); font-weight: 900; }
         sub, sup { font-size: 0.7em; }
     </style>
@@ -54,14 +60,14 @@
 <div class="game-container">
     <div id="screen-lobby" class="lobby-screen">
         <span class="brand-sub">BY YAN</span>
-        <h1 style="margin: 0; color: white; font-size: 2.2rem;">ChemistryPoly</h1>
-        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px;">Classroom Research Session (2-4 Players)</p>
+        <h1 style="margin: 0; color: white; font-size: 2.3rem; font-weight: 900;">ChemistryPoly</h1>
+        <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;">Classroom Research Session (2-4 Players)</p>
         
         <div class="char-grid">
-            <div class="char-card" id="card0" onclick="togglePlayer(0)"><span style="font-size:2rem">🐱</span><br><small>CAT-ALYST</small></div>
-            <div class="char-card" id="card1" onclick="togglePlayer(1)"><span style="font-size:2rem">🐶</span><br><small>DOG-MA</small></div>
-            <div class="char-card" id="card2" onclick="togglePlayer(2)"><span style="font-size:2rem">🦊</span><br><small>FOX-PHATE</small></div>
-            <div class="char-card" id="card3" onclick="togglePlayer(3)"><span style="font-size:2rem">🐰</span><br><small>BUN-SEN</small></div>
+            <div class="char-card" id="card0" onclick="togglePlayer(0)"><span style="font-size:2.5rem">🐱</span><br><small>CAT-ALYST</small></div>
+            <div class="char-card" id="card1" onclick="togglePlayer(1)"><span style="font-size:2.5rem">🐶</span><br><small>DOG-MA</small></div>
+            <div class="char-card" id="card2" onclick="togglePlayer(2)"><span style="font-size:2.5rem">🦊</span><br><small>FOX-PHATE</small></div>
+            <div class="char-card" id="card3" onclick="togglePlayer(3)"><span style="font-size:2.5rem">🐰</span><br><small>BUN-SEN</small></div>
         </div>
         <button class="btn btn-start" id="startBtn" disabled onclick="startGame()">START EXPERIMENT</button>
     </div>
@@ -74,7 +80,7 @@
             <div class="tile" id="t3" style="color:var(--pink)">CHANCE</div>
             <div class="tile" id="t11">Molality<br>Mile</div>
             <div style="grid-column: span 2; grid-row: span 2; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0.1">
-                 <span style="font-size:1.2rem; font-weight:900">YAN</span><small>ChemistryPoly</small>
+                 <span style="font-size:1.5rem; font-weight:900">YAN</span><small>ChemistryPoly</small>
             </div>
             <div class="tile" id="t4">PCl<sub>5</sub><br>Orbit</div>
             <div class="tile" id="t10">Buffer<br>Zone</div>
@@ -89,39 +95,40 @@
         <div class="center-ui">
             <div class="dice-container" onclick="rollDice()">
                 <div id="dice" class="dice">
-                    <div class="dice-face face-1">1</div><div class="dice-face face-2">2</div><div class="dice-face face-3">3</div>
+                    <div class="dice-face face-1">1</div>
+                    <div class="dice-face face-2">2</div>
+                    <div class="dice-face face-3">3</div>
                 </div>
             </div>
-            <h3 id="statusLabel" style="margin:0; color:var(--accent); font-size: 1rem;">WAITING...</h3>
-            <p id="feedback" style="font-size: 0.75rem; color: #94a3b8; margin: 8px 0; min-height: 18px;">Roll the dice to start research!</p>
+            <h3 id="statusLabel" style="margin:0; color:var(--accent); text-transform: uppercase;">WAITING...</h3>
+            <p id="feedback" style="font-size: 0.8rem; color: #94a3b8; margin: 10px 0; min-height: 20px;">Tap dice to research!</p>
             <button id="rollBtn" class="btn btn-roll" onclick="rollDice()">ROLL DICE</button>
         </div>
 
-        <div id="dashboard" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); background: rgba(0,0,0,0.3); padding: 10px;"></div>
+        <div id="dashboard" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); background: rgba(0,0,0,0.4); padding: 15px;"></div>
     </div>
 </div>
 
 <div class="overlay" id="qOverlay">
     <div class="q-card">
-        <h3 style="color:var(--accent); margin-top:0; font-size: 0.9rem;">RESEARCH TASK</h3>
-        <p id="qText" style="font-size: 1rem; line-height: 1.4; margin-bottom: 15px;"></p>
-        <button id="hintBtn" class="btn btn-hint" onclick="useHint()">💡 USE HINT (-20 PTS)</button>
+        <h3 style="color:var(--accent); margin-top:0; letter-spacing: 2px;">RESEARCH TASK</h3>
+        <p id="qText" style="font-size: 1.1rem; line-height: 1.4; margin-bottom: 20px;"></p>
+        <button id="hintBtn" class="btn btn-hint" onclick="useHint()">💡 UNLOCK HINT (-20 PTS)</button>
         <div id="optionsArea"></div>
     </div>
 </div>
 
 <div class="overlay" id="victoryOverlay">
-    <div class="q-card" style="border-color: var(--gold);">
-        <h1 style="color:var(--gold); margin:0;">🏆 SUCCESS!</h1>
-        <p>Experiment Concluded. Winner:</p>
-        <h2 id="winnerName" style="color:white; font-size: 1.8rem;">-</h2>
-        <div id="finalRankings" style="text-align: left; margin: 15px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; font-size: 0.9rem;"></div>
-        <button class="btn btn-start" onclick="location.reload()">NEW RESEARCH</button>
+    <div class="q-card" style="border-color: var(--gold); border-width: 4px;">
+        <h1 style="color:var(--gold); margin:0; font-size: 2.5rem;">🏆 VICTORY!</h1>
+        <p style="margin: 10px 0;">Top Researcher Found:</p>
+        <h2 id="winnerName" style="color:white; font-size: 2rem; margin: 5px 0;">-</h2>
+        <div id="finalRankings" style="text-align: left; margin: 20px 0; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);"></div>
+        <button class="btn btn-start" onclick="location.reload()">NEW RESEARCH SESSION</button>
     </div>
 </div>
 
 <script>
-    // Audio Context Sounds
     const sounds = {
         roll: new Audio('https://www.soundjay.com/buttons/button-27.mp3'),
         correct: new Audio('https://www.soundjay.com/buttons/button-3.mp3'),
@@ -129,45 +136,44 @@
         win: new Audio('https://www.soundjay.com/human/cheering-01.mp3')
     };
 
-    function playSound(type) {
-        sounds[type].currentTime = 0;
-        sounds[type].play().catch(() => {});
-    }
+    function playSound(type) { sounds[type].currentTime = 0; sounds[type].play().catch(() => {}); }
 
     const questions = [
-        // LVL 1
-        { lvl: 1, text: "Definition of Molarity (M)?", options: ["Moles/L Solution", "Moles/kg Solvent", "Grams/L"], correct: "Moles/L Solution", hint: "Think: Volume of the total solution." },
-        { lvl: 1, text: "Definition of Molality (m)?", options: ["Moles/L", "Moles/kg Solvent", "Grams/mL"], correct: "Moles/kg Solvent", hint: "Think: Mass of the solvent used." },
-        { lvl: 1, text: "Which unit is temperature-independent?", options: ["Molarity", "Molality", "Normality"], correct: "Molality", hint: "Mass doesn't change when liquid expands!" },
-        { lvl: 1, text: "Geometry of SO<sub>2</sub>?", options: ["Linear", "Bent", "T-shaped"], correct: "Bent", hint: "One lone pair pushes the bonds down." },
-        { lvl: 1, text: "Geometry of BF<sub>3</sub>?", options: ["Trigonal Planar", "Tetrahedral", "Bent"], correct: "Trigonal Planar", hint: "Boron has only 3 valence electrons." },
-        { lvl: 1, text: "Grams of NaOH (MW:40) for 1.5L of 0.1M?", options: ["4.0g", "6.0g", "8.0g"], correct: "6.0g", hint: "Formula: M × V × MW" },
-        { lvl: 1, text: "Moles in 2L of 0.5M Glucose?", options: ["0.5", "1.0", "2.0"], correct: "1.0", hint: "Formula: M × V" },
-        { lvl: 1, text: "Electron geometry of H<sub>2</sub>O?", options: ["Linear", "Bent", "Tetrahedral"], correct: "Tetrahedral", hint: "Count the 2 bonds AND the 2 lone pairs." },
-        { lvl: 1, text: "Valence electrons in Phosphorus?", options: ["3", "5", "7"], correct: "5", hint: "Group 15 element." },
-        { lvl: 1, text: "Molarity of 10g NaOH (MW:40) in 250mL?", options: ["0.5M", "1.0M", "2.0M"], correct: "1.0M", hint: "Convert mL to L first!" },
-        // LVL 2
-        { lvl: 2, text: "A buffer consists of a Weak Acid and its:", options: ["Strong Base", "Conjugate Base", "Strong Acid"], correct: "Conjugate Base", hint: "It needs a partner to neutralize added base." },
-        { lvl: 2, text: "Which pair forms a buffer?", options: ["HCl/NaCl", "CH<sub>3</sub>COOH/CH<sub>3</sub>COONa", "NaOH/NaCl"], correct: "CH<sub>3</sub>COOH/CH<sub>3</sub>COONa", hint: "Look for a weak organic acid." },
-        { lvl: 2, text: "Hybridisation of P in PCl<sub>5</sub>?", options: ["sp<sup>3</sup>", "sp<sup>3</sup>d", "sp<sup>3</sup>d<sup>2</sup>"], correct: "sp<sup>3</sup>d", hint: "5 bonds = 5 hybrid orbitals needed." },
-        { lvl: 2, text: "Hybridisation of S in SF<sub>6</sub>?", options: ["sp<sup>3</sup>d", "sp<sup>3</sup>d<sup>2</sup>", "dsp<sup>2</sup>"], correct: "sp<sup>3</sup>d<sup>2</sup>", hint: "6 bonds = 6 hybrid orbitals needed." },
-        { lvl: 2, text: "IUPAC Name for Ni(CO)<sub>4</sub>?", options: ["Nickel carbonyl", "Tetracarbonylnickel(0)", "Ni(IV) carbonyl"], correct: "Tetracarbonylnickel(0)", hint: "CO is a neutral ligand." },
-        { lvl: 2, text: "Best indicator for Weak Acid vs Strong Base?", options: ["Methyl Orange", "Phenolphthalein", "Litmus"], correct: "Phenolphthalein", hint: "End point is in the basic range (pH > 7)." },
-        { lvl: 2, text: "K<sub>sp</sub> expression for Ag<sub>2</sub>SO<sub>4</sub>?", options: ["[Ag<sup>+</sup>][SO<sub>4</sub><sup>2-</sup>]", "[Ag<sup>+</sup>]<sup>2</sup>[SO<sub>4</sub><sup>2-</sup>]", "[Ag<sup>+</sup>][SO<sub>4</sub><sup>2-</sup>]<sup>2</sup>"], correct: "[Ag<sup>+</sup>]<sup>2</sup>[SO<sub>4</sub><sup>2-</sup>]", hint: "Coefficients become exponents." },
-        { lvl: 2, text: "K<sub>sp</sub> for PbCl<sub>2</sub>?", options: ["[Pb<sup>2+</sup>][Cl<sup>-</sup>]", "[Pb<sup>2+</sup>][Cl<sup>-</sup>]<sup>2</sup>", "[Pb][Cl]<sub>2</sub>"], correct: "[Pb<sup>2+</sup>][Cl<sup>-</sup>]<sup>2</sup>", hint: "Cl is squared." },
-        { lvl: 2, text: "Grams Lidocaine for 200mL of 2% (w/v)?", options: ["2g", "4g", "8g"], correct: "4g", hint: "2g per 100mL." },
-        { lvl: 2, text: "mL Ethanol for 500mL of 70% (v/v)?", options: ["300", "350", "400"], correct: "350", hint: "0.70 × 500." },
-        // LVL 3
-        { lvl: 3, text: "Bond order for O<sub>2</sub><sup>+</sup>?", options: ["2.0", "2.5", "3.0"], correct: "2.5", hint: "Removing 1 electron from antibonding increases order." },
-        { lvl: 3, text: "Which molecule is paramagnetic?", options: ["N<sub>2</sub>", "O<sub>2</sub>", "F<sub>2</sub>"], correct: "O<sub>2</sub>", hint: "Look for unpaired electrons." },
-        { lvl: 3, text: "Common buffer in human blood?", options: ["HCl/NaCl", "H<sub>2</sub>CO<sub>3</sub>/HCO<sub>3</sub><sup>-</sup>", "NH<sub>3</sub>/NH<sub>4</sub>Cl"], correct: "H<sub>2</sub>CO<sub>3</sub>/HCO<sub>3</sub><sup>-</sup>", hint: "Bicarbonate system." },
-        { lvl: 3, text: "If [A<sup>-</sup>] = [HA], then pH equals:", options: ["7.0", "pK<sub>a</sub>", "14.0"], correct: "pK<sub>a</sub>", hint: "log(1) is zero." },
-        { lvl: 3, text: "Buffer: [A<sup>-</sup>]=0.5, [HA]=0.05, pK<sub>a</sub>=3.8. pH?", options: ["3.8", "4.8", "5.8"], correct: "4.8", hint: "pH = pKa + log(10)." },
-        { lvl: 3, text: "Target pH: 5.2, pK<sub>a</sub>: 4.2. Ratio [A<sup>-</sup>]/[HA]?", options: ["1", "10", "100"], correct: "10", hint: "Ratio is 10^(pH-pKa)." },
-        { lvl: 3, text: "pH of [HA]=0.2M, [A<sup>-</sup>]=0.02M, pK<sub>a</sub>=9.2?", options: ["8.2", "9.2", "10.2"], correct: "8.2", hint: "Ratio is 0.1, so subtract 1." },
-        { lvl: 3, text: "Aspirin (pK<sub>a</sub> 3.5), pH 4.5. Ratio [A<sup>-</sup>]/[HA]?", options: ["1", "10", "0.1"], correct: "10", hint: "pH is 1 unit above pKa." },
-        { lvl: 3, text: "Find pH: [A<sup>-</sup>]=0.25, [HA]=0.25, pK<sub>a</sub>=7.2.", options: ["6.2", "7.2", "8.2"], correct: "7.2", hint: "Equal concentrations mean pH = pKa." },
-        { lvl: 3, text: "A buffer pair includes a weak acid and a salt of a:", options: ["Strong Acid", "Strong Base", "Neutral Salt"], correct: "Strong Base", hint: "Example: Na (from NaOH) + Acetate." }
+        // LVL 1 (10 Total)
+        { lvl: 1, text: "Definition of Molarity (M)?", options: ["Moles/L Solution", "Moles/kg Solvent", "Grams per Liter", "Volume per Volume %"], correct: "Moles/L Solution", hint: "Think: Volume of the total solution." },
+        { lvl: 1, text: "Definition of Molality (m)?", options: ["Moles/L Solution", "Moles/kg Solvent", "Grams per mL", "Weight per Weight %"], correct: "Moles/kg Solvent", hint: "Think: Mass of the solvent used." },
+        { lvl: 1, text: "Which concentration unit is temperature-independent?", options: ["Molarity", "Molality", "Normality", "Formality"], correct: "Molality", hint: "Mass doesn't change when liquids expand." },
+        { lvl: 1, text: "What is the geometry of SO<sub>2</sub>?", options: ["Linear", "Bent", "Trigonal Planar", "Tetrahedral"], correct: "Bent", hint: "One lone pair pushes the bonds down." },
+        { lvl: 1, text: "What is the geometry of BF<sub>3</sub>?", options: ["Trigonal Planar", "Tetrahedral", "Bent", "Linear"], correct: "Trigonal Planar", hint: "Boron has only 3 valence electrons to share." },
+        { lvl: 1, text: "Grams of NaOH (MW:40) needed for 1.5L of 0.1M?", options: ["4.0g", "6.0g", "8.0g", "10.0g"], correct: "6.0g", hint: "Formula: Grams = M × V(L) × MW" },
+        { lvl: 1, text: "How many moles are in 2L of 0.5M Glucose?", options: ["0.5", "1.0", "1.5", "2.0"], correct: "1.0", hint: "Formula: Moles = Molarity × Volume." },
+        { lvl: 1, text: "What is the electron geometry of H<sub>2</sub>O?", options: ["Linear", "Bent", "Tetrahedral", "Trigonal Planar"], correct: "Tetrahedral", hint: "Count the 2 bonds AND the 2 lone pairs." },
+        { lvl: 1, text: "How many valence electrons are in Phosphorus?", options: ["3", "4", "5", "6"], correct: "5", hint: "It is a Group 15 element." },
+        { lvl: 1, text: "Calculate Molarity of 10g NaOH (MW:40) in 250mL.", options: ["0.5M", "1.0M", "1.5M", "2.0M"], correct: "1.0M", hint: "Convert 250mL to 0.25L first!" },
+        
+        // LVL 2 (10 Total)
+        { lvl: 2, text: "A buffer consists of a Weak Acid and its:", options: ["Strong Base", "Conjugate Base", "Strong Acid", "Neutral Salt"], correct: "Conjugate Base", hint: "It needs a partner to neutralize added bases." },
+        { lvl: 2, text: "Which pair forms a buffer solution?", options: ["HCl / NaCl", "CH<sub>3</sub>COOH / CH<sub>3</sub>COONa", "NaOH / NaCl", "HNO<sub>3</sub> / NaNO<sub>3</sub>"], correct: "CH<sub>3</sub>COOH / CH<sub>3</sub>COONa", hint: "Look for a weak organic acid." },
+        { lvl: 2, text: "Hybridisation of P in PCl<sub>5</sub>?", options: ["sp<sup>3</sup>", "sp<sup>3</sup>d", "sp<sup>3</sup>d<sup>2</sup>", "dsp<sup>2</sup>"], correct: "sp<sup>3</sup>d", hint: "5 bonds = 5 hybrid orbitals needed." },
+        { lvl: 2, text: "Hybridisation of S in SF<sub>6</sub>?", options: ["sp<sup>3</sup>d", "sp<sup>3</sup>d<sup>2</sup>", "sp<sup>3</sup>", "dsp<sup>2</sup>"], correct: "sp<sup>3</sup>d<sup>2</sup>", hint: "6 bonds = 6 hybrid orbitals needed." },
+        { lvl: 2, text: "What is the IUPAC Name for Ni(CO)<sub>4</sub>?", options: ["Nickel carbonyl", "Tetracarbonylnickel(0)", "Ni(IV) carbonyl", "Tetracarbonylnickelate"], correct: "Tetracarbonylnickel(0)", hint: "CO is a neutral ligand." },
+        { lvl: 2, text: "Best indicator for Weak Acid vs Strong Base titration?", options: ["Methyl Orange", "Phenolphthalein", "Litmus", "Bromothymol Blue"], correct: "Phenolphthalein", hint: "End point is in the basic range (pH > 7)." },
+        { lvl: 2, text: "Correct K<sub>sp</sub> expression for Ag<sub>2</sub>SO<sub>4</sub>?", options: ["[Ag<sup>+</sup>][SO<sub>4</sub><sup>2-</sup>]", "[Ag<sup>+</sup>]<sup>2</sup>[SO<sub>4</sub><sup>2-</sup>]", "[Ag<sup>+</sup>][SO<sub>4</sub><sup>2-</sup>]<sup>2</sup>", "[Ag<sup>2+</sup>][SO<sub>4</sub><sup>2-</sup>]"], correct: "[Ag<sup>+</sup>]<sup>2</sup>[SO<sub>4</sub><sup>2-</sup>]", hint: "Coefficients become exponents." },
+        { lvl: 2, text: "K<sub>sp</sub> expression for PbCl<sub>2</sub>?", options: ["[Pb<sup>2+</sup>][Cl<sup>-</sup>]", "[Pb<sup>2+</sup>][Cl<sup>-</sup>]<sup>2</sup>", "[Pb<sup>2+</sup>]<sup>2</sup>[Cl<sup>-</sup>]", "[Pb][Cl]<sub>2</sub>"], correct: "[Pb<sup>2+</sup>][Cl<sup>-</sup>]<sup>2</sup>", hint: "The Cl concentration must be squared." },
+        { lvl: 2, text: "Grams of Lidocaine for 200mL of 2% (w/v) solution?", options: ["2g", "4g", "6g", "8g"], correct: "4g", hint: "2g per 100mL means 4g per 200mL." },
+        { lvl: 2, text: "How many mL of Ethanol in 500mL of 70% (v/v) sanitizer?", options: ["300mL", "350mL", "400mL", "450mL"], correct: "350mL", hint: "Multiply 500 by 0.70." },
+
+        // LVL 3 (10 Total)
+        { lvl: 3, text: "What is the bond order for O<sub>2</sub><sup>+</sup>?", options: ["1.5", "2.0", "2.5", "3.0"], correct: "2.5", hint: "Removing 1 electron from antibonding increases order." },
+        { lvl: 3, text: "Which of these molecules is paramagnetic?", options: ["N<sub>2</sub>", "O<sub>2</sub>", "F<sub>2</sub>", "H<sub>2</sub>"], correct: "O<sub>2</sub>", hint: "Paramagnetic means unpaired electrons exist." },
+        { lvl: 3, text: "What is the primary buffer system in human blood?", options: ["HCl / NaCl", "H<sub>2</sub>CO<sub>3</sub> / HCO<sub>3</sub><sup>-</sup>", "NH<sub>3</sub> / NH<sub>4</sub>Cl", "NaOH / NaAc"], correct: "H<sub>2</sub>CO<sub>3</sub> / HCO<sub>3</sub><sup>-</sup>", hint: "The Bicarbonate system." },
+        { lvl: 3, text: "If [A<sup>-</sup>] = [HA], then the pH equals:", options: ["7.0", "pK<sub>a</sub>", "pK<sub>b</sub>", "14.0"], correct: "pK<sub>a</sub>", hint: "The log(1) term becomes zero." },
+        { lvl: 3, text: "Buffer: [A<sup>-</sup>]=0.5, [HA]=0.05, pK<sub>a</sub>=3.8. Calculate pH.", options: ["3.8", "4.3", "4.8", "5.2"], correct: "4.8", hint: "pH = pKa + log(Ratio). log(10) = 1." },
+        { lvl: 3, text: "Target pH: 5.2, pK<sub>a</sub>: 4.2. What is the [A<sup>-</sup>]/[HA] ratio?", options: ["1", "5", "10", "100"], correct: "10", hint: "Ratio is 10^(pH-pKa)." },
+        { lvl: 3, text: "Find pH of [HA]=0.2M, [A<sup>-</sup>]=0.02M, pK<sub>a</sub>=9.2.", options: ["8.2", "9.2", "10.2", "11.2"], correct: "8.2", hint: "Ratio is 0.1, so log(0.1) = -1." },
+        { lvl: 3, text: "Aspirin (pK<sub>a</sub> 3.5) at pH 4.5. Find [A<sup>-</sup>]/[HA] ratio.", options: ["1", "5", "10", "0.1"], correct: "10", hint: "The pH is exactly 1 unit above pKa." },
+        { lvl: 3, text: "Find pH of buffer: [A<sup>-</sup>]=0.25, [HA]=0.25, pK<sub>a</sub>=7.2.", options: ["6.2", "7.2", "8.2", "9.2"], correct: "7.2", hint: "Equal concentrations mean pH = pKa." },
+        { lvl: 3, text: "A pharmaceutical buffer pair includes weak acid + salt of a:", options: ["Strong Acid", "Strong Base", "Weak Base", "Neutral Salt"], correct: "Strong Base", hint: "Example: Sodium (Strong Base origin) + Acetate." }
     ];
 
     let allChars = [
@@ -208,8 +214,10 @@
         const roll = Math.floor(Math.random() * 3) + 1;
         setTimeout(() => {
             dice.classList.remove('rolling');
-            dice.style.transform = roll === 1 ? "rotateY(0deg)" : roll === 2 ? "rotateY(180deg)" : "rotateY(-90deg)";
-            setTimeout(() => { movePlayer(roll); rolling = false; }, 500);
+            if (roll === 1) dice.style.transform = "rotateY(0deg)";
+            if (roll === 2) dice.style.transform = "rotateY(180deg)";
+            if (roll === 3) dice.style.transform = "rotateY(-90deg)";
+            setTimeout(() => { movePlayer(roll); rolling = false; }, 600);
         }, 800);
     }
 
@@ -226,10 +234,10 @@
             { type: 'q', lvl: 2 }, { type: 'q', lvl: 3 }, { type: 'q', lvl: 3 }, { type: 'q', lvl: 1 }
         ];
         const land = boardMap[p.pos];
-        if (land.type === 'go') { p.pts += 100; playSound('correct'); checkWin(); endTurn(); }
+        if (land.type === 'go') { p.pts += 100; playSound('correct'); document.getElementById('feedback').innerText = "Passed GO! +100 PTS 🎓"; checkWin(); endTurn(); }
         else if (land.type === 'chance') {
             const win = Math.random() > 0.5; p.pts += win ? 50 : -30;
-            document.getElementById('feedback').innerText = win ? "Grant Awarded! +50" : "Lab Spill... -30";
+            document.getElementById('feedback').innerText = win ? "Grant Awarded! +50 PTS" : "Lab Spill! -30 PTS";
             if(win) playSound('correct'); else playSound('wrong');
             checkWin(); endTurn();
         } else { showQuestion(land.lvl, p); }
@@ -246,8 +254,8 @@
             const b = document.createElement('button');
             b.className = "btn-mcq"; b.innerHTML = opt;
             b.onclick = () => {
-                if (opt === currentQ.correct) { p.pts += 50; playSound('correct'); } 
-                else { p.pts -= 20; playSound('wrong'); }
+                if (opt === currentQ.correct) { p.pts += 50; playSound('correct'); document.getElementById('feedback').innerText = "Correct! +50 PTS"; } 
+                else { p.pts -= 20; playSound('wrong'); document.getElementById('feedback').innerText = "Incorrect! -20 PTS"; }
                 document.getElementById('qOverlay').style.display = 'none';
                 checkWin(); endTurn();
             };
@@ -258,10 +266,10 @@
     function useHint() {
         if (players[turn].pts >= 20) {
             players[turn].pts -= 20;
-            document.getElementById('qText').innerHTML += `<br><small style="color:var(--gold)">HINT: ${currentQ.hint}</small>`;
+            document.getElementById('qText').innerHTML += `<br><small style="color:var(--gold); font-weight:700;">HINT: ${currentQ.hint}</small>`;
             document.getElementById('hintBtn').style.display = 'none';
             document.getElementById('pts' + turn).innerText = players[turn].pts;
-        }
+        } else { alert("Insufficient points for a hint!"); }
     }
 
     function checkWin() {
@@ -271,7 +279,7 @@
                 document.getElementById('victoryOverlay').style.display = 'flex';
                 document.getElementById('winnerName').innerText = p.icon + " " + p.name;
                 const rankings = [...players].sort((a,b) => b.pts - a.pts);
-                document.getElementById('finalRankings').innerHTML = rankings.map((r,i) => `<div>#${i+1} ${r.icon} ${r.pts} PTS</div>`).join('');
+                document.getElementById('finalRankings').innerHTML = rankings.map((r,i) => `<div>#${i+1} ${r.icon} ${r.name}: <b>${r.pts} PTS</b></div>`).join('');
             }
         });
     }
@@ -281,17 +289,15 @@
         document.getElementById('stat' + turn).classList.remove('active-turn');
         turn = (turn + 1) % players.length;
         document.getElementById('stat' + turn).classList.add('active-turn');
-        document.getElementById('statusLabel').innerText = `${players[turn].name.toUpperCase()}'S TURN`;
+        document.getElementById('statusLabel').innerText = players[turn].name + "'S TURN";
     }
 
     function updatePieces() {
         players.forEach((p, idx) => {
             const tile = document.getElementById('t' + p.pos);
             const piece = document.getElementById('piece' + p.id);
-            if(tile && piece) {
-                piece.style.left = (tile.offsetLeft + (idx % 2) * 15 + 5) + 'px';
-                piece.style.top = (tile.offsetTop + Math.floor(idx / 2) * 15 + 5) + 'px';
-            }
+            piece.style.left = (tile.offsetLeft + (idx % 2) * 15 + 5) + 'px';
+            piece.style.top = (tile.offsetTop + Math.floor(idx / 2) * 15 + 5) + 'px';
         });
     }
 </script>

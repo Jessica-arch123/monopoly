@@ -3,224 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaPoly: Neon Lab</title>
+    <title>PharmaPoly: Multiplayer Lobby</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #6c5ce7; --accent: #00d2d3; --bg: #0f172a; --card: rgba(255, 255, 255, 0.1); --gold: #feca57; --pink: #ff9ff3; }
         body { font-family: 'Outfit', sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; padding: 10px; margin: 0; min-height: 100vh; }
         
-        .game-container { background: #1e293b; width: 100%; max-width: 480px; border-radius: 40px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .game-container { background: #1e293b; width: 100%; max-width: 500px; border-radius: 40px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
         
-        /* Neon Board Layout */
-        .board-track { 
-            display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); 
-            gap: 10px; padding: 20px; background: rgba(0,0,0,0.2); height: 380px; position: relative;
-        }
-        .tile { 
-            background: var(--card); backdrop-filter: blur(10px); border-radius: 15px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            font-size: 0.75rem; font-weight: 700; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.05);
-            transition: 0.4s; text-align: center;
-        }
-        .tile-active { background: var(--primary); color: white; box-shadow: 0 0 20px var(--primary); border: none; transform: scale(1.05); }
-        .tile-start { background: var(--accent); color: white; }
+        /* Lobby Styles */
+        .lobby-screen { padding: 30px; text-align: center; }
+        .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .char-card { background: var(--card); padding: 15px; border-radius: 20px; border: 2px solid transparent; cursor: pointer; transition: 0.3s; }
+        .char-card.selected { border-color: var(--accent); background: rgba(0, 210, 211, 0.2); }
+        .char-icon { font-size: 2.5rem; display: block; margin-bottom: 5px; }
 
-        /* Animated Player Piece */
-        #playerPiece { 
-            position: absolute; font-size: 2.5rem; z-index: 100;
-            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
-            animation: bounce 2s infinite ease-in-out;
-        }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        /* Board & UI (Hidden initially) */
+        .game-screen { display: none; }
+        .board-track { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 8px; padding: 15px; background: rgba(0,0,0,0.2); height: 360px; position: relative; }
+        .tile { background: var(--card); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .player-piece { position: absolute; font-size: 1.8rem; z-index: 100; transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
 
-        /* Central UI */
-        .center-ui { padding: 30px 20px; text-align: center; border-radius: 40px 40px 0 0; background: #1e293b; margin-top: -20px; position: relative; z-index: 10; }
-        .btn-roll { 
-            background: linear-gradient(135deg, var(--primary), #a29bfe); 
-            width: 80%; padding: 18px; border: none; border-radius: 20px; color: white; 
-            font-weight: 900; font-size: 1.2rem; cursor: pointer; letter-spacing: 2px;
-            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3); transition: 0.3s;
-        }
-        .btn-roll:active { transform: scale(0.95); }
+        .center-ui { padding: 20px; text-align: center; background: #1e293b; border-top: 1px solid rgba(255,255,255,0.1); }
+        .dice-container { perspective: 1000px; width: 50px; height: 50px; margin: 0 auto 15px; }
+        .dice { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s; }
+        .dice-face { position: absolute; width: 50px; height: 50px; background: white; border: 2px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 900; }
+        .face-1 { transform: translateZ(25px); } .face-2 { transform: rotateY(180deg) translateZ(25px); } .face-3 { transform: rotateY(90deg) translateZ(25px); }
+        .rolling { animation: spin 0.2s infinite linear; }
+        @keyframes spin { from { transform: rotateX(0deg) rotateY(0deg); } to { transform: rotateX(360deg) rotateY(360deg); } }
 
-        /* Stats Bar */
-        .stats-bar { display: flex; justify-content: space-around; padding: 20px; background: rgba(0,0,0,0.3); font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 15px; color: white; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+        .btn-start { background: var(--accent); margin-top: 20px; }
+        .btn-roll { background: var(--primary); width: 70%; }
         
-        /* Question Overlay */
-        .question-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(15, 23, 42, 0.95); display: none; align-items: center; justify-content: center; z-index: 1000;
-        }
-        .q-card { background: #1e293b; padding: 30px; border-radius: 30px; width: 90%; max-width: 400px; border: 1px solid var(--primary); text-align: center; }
-        .btn-mcq { background: var(--card); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 10px; width: 100%; cursor: pointer; font-family: 'Outfit'; font-weight: 700; transition: 0.3s; }
-        .btn-mcq:hover { background: var(--primary); }
+        .player-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); background: rgba(0,0,0,0.3); padding: 10px; }
+        .p-stat { text-align: center; padding: 5px; opacity: 0.4; transition: 0.3s; }
+        .p-stat.active-turn { opacity: 1; transform: scale(1.1); color: var(--accent); }
 
+        .question-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .q-card { background: #1e293b; padding: 30px; border-radius: 30px; width: 85%; max-width: 400px; border: 2px solid var(--primary); text-align: center; }
+        .btn-mcq { background: var(--card); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; margin-bottom: 8px; width: 100%; cursor: pointer; font-family: 'Outfit'; font-weight: 700; }
         sub, sup { font-size: 0.7em; }
     </style>
 </head>
 <body>
 
 <div class="game-container">
-    <div class="board-track" id="board">
-        <div class="tile tile-start" id="t0">GO</div>
-        <div class="tile" id="t1">SO<sub>2</sub></div>
-        <div class="tile" id="t2">NaOH</div>
-        <div class="tile" id="t3" style="color:var(--pink)">CHANCE</div>
-        <div class="tile" id="t11">Ag<sup>+</sup></div>
-        <div style="grid-column: span 2; grid-row: span 2; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-             <span style="font-size:3rem; opacity:0.3">🧪</span>
-             <small style="opacity:0.3; letter-spacing:2px">PHARMAPOLY</small>
+    <div id="screen-lobby" class="lobby-screen active">
+        <h2 style="color:var(--accent)">Research Lobby</h2>
+        <p>Tap characters to join the session (2-4 players)</p>
+        <div class="char-grid">
+            <div class="char-card" id="card0" onclick="togglePlayer(0)">
+                <span class="char-icon">🐱</span><small>CAT-ALYST</small>
+            </div>
+            <div class="char-card" id="card1" onclick="togglePlayer(1)">
+                <span class="char-icon">🐶</span><small>DOG-MA</small>
+            </div>
+            <div class="char-card" id="card2" onclick="togglePlayer(2)">
+                <span class="char-icon">🦊</span><small>FOX-PHATE</small>
+            </div>
+            <div class="char-card" id="card3" onclick="togglePlayer(3)">
+                <span class="char-icon">🐰</span><small>BUN-SEN</small>
+            </div>
         </div>
-        <div class="tile" id="t4">PCl<sub>5</sub></div>
-        <div class="tile" id="t10">Buffer</div>
-        <div class="tile" id="t5">Ni(CO)<sub>4</sub></div>
-        <div class="tile" id="t9">O<sub>2</sub><sup>+</sup></div>
-        <div class="tile" id="t8">SF<sub>6</sub></div>
-        <div class="tile" id="t7" style="color:var(--pink)">CHANCE</div>
-        <div class="tile" id="t6">KOH</div>
-        
-        <div id="playerPiece">🐱</div>
+        <button class="btn btn-start" id="startBtn" disabled onclick="startGame()">Start Experiment</button>
     </div>
 
-    <div class="center-ui">
-        <h2 id="tileTitle" style="margin:0; color:var(--accent)">PHASE: START</h2>
-        <p id="feedback" style="font-size: 0.9rem; color: #94a3b8; margin: 15px 0 25px 0; min-height: 20px;">Ready for research?</p>
-        <button class="btn-roll" onclick="rollDice()">ROLL DICE</button>
-    </div>
+    <div id="screen-game" class="game-screen">
+        <div class="board-track" id="board">
+            <div class="tile" id="t0" style="background:var(--accent)">GO</div>
+            <div class="tile" id="t1">SO<sub>2</sub></div>
+            <div class="tile" id="t2">NaOH</div>
+            <div class="tile" id="t3" style="color:var(--pink)">CHANCE</div>
+            <div class="tile" id="t11">Ag<sup>+</sup></div>
+            <div style="grid-column: span 2; grid-row: span 2; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0.1">
+                 <span style="font-size:2rem">🧪</span><small>PHARMAPOLY</small>
+            </div>
+            <div class="tile" id="t4">PCl<sub>5</sub></div>
+            <div class="tile" id="t10">Buffer</div>
+            <div class="tile" id="t5">Ni(CO)<sub>4</sub></div>
+            <div class="tile" id="t9">O<sub>2</sub><sup>+</sup></div>
+            <div class="tile" id="t8">SF<sub>6</sub></div>
+            <div class="tile" id="t7" style="color:var(--pink)">CHANCE</div>
+            <div class="tile" id="t6">KOH</div>
+            
+            <div id="piecesContainer"></div>
+        </div>
 
-    <div class="stats-bar">
-        <span>💰 <span id="score">0</span> PTS</span>
-        <span>💎 <span id="rank">INITIATE</span></span>
+        <div class="center-ui">
+            <div class="dice-container" onclick="rollDice()">
+                <div id="dice" class="dice">
+                    <div class="dice-face face-1">1</div><div class="dice-face face-2">2</div><div class="dice-face face-3">3</div>
+                </div>
+            </div>
+            <h3 id="statusLabel" style="margin:0; color:var(--accent)">WAITING...</h3>
+            <button id="rollBtn" class="btn btn-roll" onclick="rollDice()">ROLL DICE</button>
+        </div>
+
+        <div class="player-dashboard" id="dashboard"></div>
     </div>
 </div>
 
 <div class="question-overlay" id="qOverlay">
     <div class="q-card">
-        <h3 id="qTitle" style="color:var(--accent); margin-top:0;">DATA ANALYSIS</h3>
-        <p id="qText" style="line-height:1.6; font-size:1.1rem;"></p>
-        <div id="optionsArea"></div>
-        <div id="calcArea" style="display:none">
-            <input type="number" id="calcInput" style="width:100%; padding:15px; border-radius:15px; background:var(--bg); border:1px solid #333; color:white; text-align:center; font-size:1.2rem;">
-            <button class="btn-roll" style="margin-top:20px; width:100%" onclick="checkCalc()">SUBMIT</button>
-        </div>
+        <h3 style="color:var(--accent); margin-top:0;">RESEARCH TASK</h3>
+        <p id="qText"></p><div id="optionsArea"></div>
     </div>
 </div>
 
 <script>
     const boardItems = [
-        { name: "GO", type: "start" },
-        { name: "SO2 Lab", lvl: 1, type: "q" },
-        { name: "NaOH Unit", lvl: 1, type: "q" },
-        { name: "Grant Chance", type: "chance" },
-        { name: "PCl5 Orbit", lvl: 2, type: "q" },
-        { name: "Ni-Carbonyl", lvl: 2, type: "q" },
-        { name: "KOH Station", lvl: 2, type: "q" },
-        { name: "Scholarship", type: "chance" },
-        { name: "SF6 Octa", lvl: 2, type: "q" },
-        { name: "O2 Cation", lvl: 3, type: "q" },
-        { name: "Buffer Zone", lvl: 3, type: "q" },
-        { name: "Ag-Solubility", lvl: 2, type: "q" }
+        { name: "GO", type: "start" }, { name: "SO2", lvl: 1 }, { name: "NaOH", lvl: 1 }, { type: "chance" },
+        { name: "PCl5", lvl: 2 }, { name: "Ni(CO)4", lvl: 2 }, { name: "KOH", lvl: 2 }, { type: "chance" },
+        { name: "SF6", lvl: 2 }, { name: "O2+", lvl: 3 }, { name: "Buffer", lvl: 3 }, { name: "Ag+", lvl: 2 }
     ];
 
     const questions = [
-        { lvl: 1, isMCQ: true, text: "Geometry of SO<sub>2</sub>?", options: ["Linear", "Bent", "T-shaped", "Trigonal"], correct: "Bent" },
-        { lvl: 1, text: "NaOH (MW:40) for 1.5L of 0.1M? (grams)", calc: () => 6.00 },
-        { lvl: 2, isMCQ: true, text: "Hybridisation of P in PCl<sub>5</sub>?", options: ["sp<sup>3</sup>", "sp<sup>3</sup>d", "sp<sup>3</sup>d<sup>2</sup>", "dsp<sup>2</sup>"], correct: "sp<sup>3</sup>d" },
-        { lvl: 3, isMCQ: true, text: "Bond order for O<sub>2</sub><sup>+</sup>?", options: ["1.5", "2.0", "2.5", "3.0"], correct: "2.5" },
-        { lvl: 3, text: "Buffer: [A<sup>-</sup>]=0.5, [HA]=0.05, pK<sub>a</sub>=3.8. pH?", calc: () => 4.80 }
+        { lvl: 1, isMCQ: true, text: "Geometry of SO<sub>2</sub>?", options: ["Linear", "Bent", "T-shaped"], correct: "Bent" },
+        { lvl: 1, isMCQ: true, text: "Molality is moles per ___?", options: ["Liter Solution", "Kg Solvent", "mL Solvent"], correct: "Kg Solvent" },
+        { lvl: 2, isMCQ: true, text: "Hybridisation of P in PCl<sub>5</sub>?", options: ["sp<sup>3</sup>", "sp<sup>3</sup>d", "sp<sup>3</sup>d<sup>2</sup>"], correct: "sp<sup>3</sup>d" },
+        { lvl: 3, isMCQ: true, text: "Bond order for O<sub>2</sub><sup>+</sup>?", options: ["1.5", "2.0", "2.5"], correct: "2.5" }
     ];
 
-    let state = { pos: 0, score: 0 };
+    let allCharacters = [
+        { id: 0, icon: '🐱', name: 'Cat-alyst', active: false },
+        { id: 1, icon: '🐶', name: 'Dog-ma', active: false },
+        { id: 2, icon: '🦊', name: 'Fox-phate', active: false },
+        { id: 3, icon: '🐰', name: 'Bun-sen', active: false }
+    ];
+    let players = [];
+    let turnIndex = 0;
+    let isRolling = false;
+
+    function togglePlayer(id) {
+        allCharacters[id].active = !allCharacters[id].active;
+        document.getElementById('card' + id).classList.toggle('selected');
+        const activeCount = allCharacters.filter(c => c.active).length;
+        document.getElementById('startBtn').disabled = activeCount < 2;
+    }
+
+    function startGame() {
+        players = allCharacters.filter(c => c.active).map(c => ({ ...c, pos: 0, pts: 0 }));
+        document.getElementById('screen-lobby').style.display = 'none';
+        document.getElementById('screen-game').style.display = 'block';
+        
+        // Create pieces
+        const container = document.getElementById('piecesContainer');
+        const dash = document.getElementById('dashboard');
+        players.forEach((p, idx) => {
+            const piece = document.createElement('div');
+            piece.id = 'piece' + p.id;
+            piece.className = 'player-piece';
+            piece.innerText = p.icon;
+            container.appendChild(piece);
+
+            const stat = document.createElement('div');
+            stat.id = 'stat' + idx;
+            stat.className = 'p-stat' + (idx === 0 ? ' active-turn' : '');
+            stat.innerHTML = `<span>${p.icon}</span><br><b id="pts${idx}">0</b>`;
+            dash.appendChild(stat);
+        });
+        
+        updateStatus();
+        updatePieces();
+    }
 
     function rollDice() {
+        if (isRolling) return;
+        isRolling = true;
+        const dice = document.getElementById('dice');
+        dice.classList.add('rolling');
         const roll = Math.floor(Math.random() * 3) + 1;
-        movePlayer(roll);
+
+        setTimeout(() => {
+            dice.classList.remove('rolling');
+            dice.style.transform = roll === 1 ? "rotateY(0deg)" : roll === 2 ? "rotateY(180deg)" : "rotateY(-90deg)";
+            setTimeout(() => {
+                movePlayer(roll);
+                isRolling = false;
+            }, 500);
+        }, 800);
     }
 
     function movePlayer(steps) {
-        state.pos = (state.pos + steps) % 12;
-        updatePiece();
-        setTimeout(() => handleLanding(), 600);
+        let p = players[turnIndex];
+        p.pos = (p.pos + steps) % 12;
+        updatePieces();
+        setTimeout(() => handleLanding(p), 600);
     }
 
-    function updatePiece() {
-        const tile = document.getElementById('t' + state.pos);
-        const piece = document.getElementById('playerPiece');
-        piece.style.left = (tile.offsetLeft + tile.offsetWidth/2 - 20) + 'px';
-        piece.style.top = (tile.offsetTop + tile.offsetHeight/2 - 25) + 'px';
-        document.querySelectorAll('.tile').forEach(t => t.classList.remove('tile-active'));
-        tile.classList.add('tile-active');
-    }
-
-    function handleLanding() {
-        const land = boardItems[state.pos];
-        document.getElementById('tileTitle').innerText = land.name;
-        if (land.type === "start") {
-            state.score += 100;
-            document.getElementById('feedback').innerText = "Passed GO! Grants +100 PTS 🎓";
-            sync();
-        } else if (land.type === "chance") {
+    function handleLanding(p) {
+        const land = boardItems[p.pos];
+        if (land.type === "start") { p.pts += 100; endTurn(); }
+        else if (land.type === "chance") {
             const win = Math.random() > 0.5;
-            state.score += win ? 50 : -30;
-            document.getElementById('feedback').innerText = win ? "Research Grant! +50 PTS" : "Lab Spill... -30 PTS";
-            sync();
-        } else {
-            showQuestion(land.lvl);
-        }
+            p.pts += win ? 50 : -30;
+            endTurn();
+        } else { showQuestion(land.lvl, p); }
     }
 
-    function showQuestion(lvl) {
-        const pool = questions.filter(q => q.lvl === lvl);
-        const q = pool[Math.floor(Math.random() * pool.length)];
-        window.currentQ = q;
+    function showQuestion(lvl, p) {
+        const q = questions.filter(qu => qu.lvl === lvl) || questions;
         document.getElementById('qText').innerHTML = q.text;
         document.getElementById('qOverlay').style.display = 'flex';
-        const optArea = document.getElementById('optionsArea');
-        const calcArea = document.getElementById('calcArea');
-        optArea.innerHTML = '';
-        if (q.isMCQ) {
-            calcArea.style.display = 'none';
-            optArea.style.display = 'block';
-            q.options.forEach(opt => {
-                const b = document.createElement('button');
-                b.className = "btn-mcq"; b.innerHTML = opt;
-                b.onclick = () => processAnswer(opt === q.correct);
-                optArea.appendChild(b);
-            });
-        } else {
-            optArea.style.display = 'none';
-            calcArea.style.display = 'block';
-        }
+        const area = document.getElementById('optionsArea');
+        area.innerHTML = '';
+        q.options.forEach(opt => {
+            const b = document.createElement('button');
+            b.className = "btn-mcq"; b.innerHTML = opt;
+            b.onclick = () => {
+                if (opt === q.correct) p.pts += 50; else p.pts -= 20;
+                document.getElementById('qOverlay').style.display = 'none';
+                endTurn();
+            };
+            area.appendChild(b);
+        });
     }
 
-    function processAnswer(isCorrect) {
-        if (isCorrect) {
-            state.score += 50;
-            document.getElementById('feedback').innerText = "Correct Analysis! +50 PTS 🧪";
-        } else {
-            state.score -= 20;
-            document.getElementById('feedback').innerText = "Analysis Failed... -20 PTS 💀";
-        }
-        document.getElementById('qOverlay').style.display = 'none';
-        sync();
+    function endTurn() {
+        document.getElementById('pts' + turnIndex).innerText = players[turnIndex].pts;
+        document.getElementById('stat' + turnIndex).classList.remove('active-turn');
+        turnIndex = (turnIndex + 1) % players.length;
+        document.getElementById('stat' + turnIndex).classList.add('active-turn');
+        updateStatus();
     }
 
-    function checkCalc() {
-        const val = parseFloat(document.getElementById('calcInput').value);
-        processAnswer(Math.abs(val - window.currentQ.calc()) < 0.1);
-        document.getElementById('calcInput').value = '';
+    function updateStatus() {
+        document.getElementById('statusLabel').innerText = `${players[turnIndex].name.toUpperCase()}'S TURN`;
     }
 
-    function sync() {
-        document.getElementById('score').innerText = state.score;
-        let r = "INITIATE";
-        if(state.score > 200) r = "RESEARCHER";
-        if(state.score > 500) r = "LAB MANAGER";
-        document.getElementById('rank').innerText = r;
+    function updatePieces() {
+        players.forEach((p, idx) => {
+            const tile = document.getElementById('t' + p.pos);
+            const piece = document.getElementById('piece' + p.id);
+            const offsetX = (idx % 2) * 15;
+            const offsetY = Math.floor(idx / 2) * 15;
+            piece.style.left = (tile.offsetLeft + offsetX) + 'px';
+            piece.style.top = (tile.offsetTop + offsetY) + 'px';
+        });
     }
-
-    window.onload = updatePiece;
 </script>
 </body>
 </html>

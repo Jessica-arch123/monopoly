@@ -1,304 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChemistryPoly by YAN</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #6c5ce7; --accent: #00d2d3; --bg: #0f172a; --card: rgba(255, 255, 255, 0.1); --gold: #feca57; --pink: #ff9ff3; --red: #ff7675; }
-        body { font-family: 'Outfit', sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; padding: 10px; margin: 0; min-height: 100vh; overflow-x: hidden; }
-        .game-container { background: #1e293b; width: 100%; max-width: 500px; border-radius: 40px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); position: relative; }
-        
-        /* Lobby */
-        .lobby-screen { padding: 30px; text-align: center; }
-        .brand-sub { color: var(--accent); letter-spacing: 3px; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; display: block; }
-        .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .char-card { background: var(--card); padding: 15px; border-radius: 20px; border: 2px solid transparent; cursor: pointer; transition: 0.3s; }
-        .char-card.selected { border-color: var(--accent); background: rgba(0, 210, 211, 0.2); }
-
-        /* Board */
-        .game-screen { display: none; }
-        .board-track { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 8px; padding: 15px; background: rgba(0,0,0,0.2); height: 360px; position: relative; }
-        .tile { background: var(--card); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.05); text-align: center; padding: 2px; line-height: 1.1; }
-        .tile-special { background: var(--red); color: white; }
-        .player-piece { position: absolute; font-size: 1.6rem; z-index: 100; transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); filter: drop-shadow(0 0 8px black); pointer-events: none; }
-
-        /* UI */
-        .center-ui { padding: 20px; text-align: center; background: #1e293b; border-top: 1px solid rgba(255,255,255,0.1); }
-        .dice-container { perspective: 1000px; width: 55px; height: 55px; margin: 0 auto 10px; cursor: pointer; }
-        .dice { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s ease-out; }
-        .dice-face { position: absolute; width: 55px; height: 55px; background: white; border: 2px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: 900; font-size: 1.4rem; }
-        .face-1 { transform: translateZ(27px); } .face-2 { transform: rotateY(180deg) translateZ(27px); } .face-3 { transform: rotateY(90deg) translateZ(27px); }
-        .rolling { animation: spin 0.2s infinite linear; }
-        @keyframes spin { from { transform: rotateX(0deg) rotateY(0deg); } to { transform: rotateX(360deg) rotateY(360deg); } }
-
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 15px; color: white; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
-        .btn-start { background: var(--accent); box-shadow: 0 5px 0 #009e9f; }
-        .btn-roll { background: var(--primary); width: 80%; box-shadow: 0 5px 0 #4834d4; }
-        .btn-hint { background: var(--gold); color: #333; margin-bottom: 10px; font-size: 0.75rem; padding: 8px; }
-        
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
-        .q-card { background: #1e293b; padding: 25px; border-radius: 30px; width: 100%; max-width: 400px; border: 2px solid var(--primary); text-align: center; }
-        .btn-mcq { background: var(--card); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; margin-bottom: 8px; width: 100%; cursor: pointer; font-family: 'Outfit'; font-weight: 700; text-align: left; }
-        
-        .p-stat { text-align: center; padding: 8px; opacity: 0.3; flex: 1; border-radius: 15px; transition: 0.3s; }
-        .p-stat.active-turn { opacity: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--primary); }
-        .quarantined { filter: grayscale(1) sepia(1) hue-rotate(-50deg); }
-        sub, sup { font-size: 0.7em; }
-    </style>
-</head>
-<body>
-
-<div class="game-container">
-    <div id="screen-lobby" class="lobby-screen">
-        <span class="brand-sub">BY YAN</span>
-        <h1 style="margin: 0; color: white; font-size: 2.2rem; font-weight: 900;">ChemistryPoly</h1>
-        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 25px;">Analytical Research Session (1-4 Players)</p>
-        <div class="char-grid">
-            <div class="char-card" id="card0" onclick="togglePlayer(0)"><span style="font-size:2.2rem">🐱</span><br><small>CAT-ALYST</small></div>
-            <div class="char-card" id="card1" onclick="togglePlayer(1)"><span style="font-size:2.2rem">🐶</span><br><small>DOG-MA</small></div>
-            <div class="char-card" id="card2" onclick="togglePlayer(2)"><span style="font-size:2.2rem">🦊</span><br><small>FOX-PHATE</small></div>
-            <div class="char-card" id="card3" onclick="togglePlayer(3)"><span style="font-size:2.2rem">🐰</span><br><small>BUN-SEN</small></div>
-        </div>
-        <button class="btn btn-start" id="startBtn" disabled onclick="startGame()">INITIATE RESEARCH</button>
-    </div>
-
-    <div id="screen-game" class="game-screen">
-        <div class="board-track" id="board">
-            <div class="tile" id="t0" style="background:var(--accent); color:white;">GO</div>
-            <div class="tile" id="t1">Molarity<br>Manor</div>
-            <div class="tile" id="t2">Titration<br>Towers</div>
-            <div class="tile tile-special" id="t3">SAFETY<br>AUDIT</div>
-            <div class="tile" id="t11">Molality<br>Mile</div>
-            <div style="grid-column: span 2; grid-row: span 2; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0.1">
-                 <span style="font-size:1.4rem; font-weight:900">YAN</span><small>ChemistryPoly</small>
-            </div>
-            <div class="tile" id="t4">Spectral<br>Spires</div>
-            <div class="tile" id="t10">Buffer<br>Zone</div>
-            <div class="tile" id="t5">EDTA<br>Lab</div>
-            <div class="tile" id="t9">VSEPR<br>Valley</div>
-            <div class="tile" id="t8">Chromato<br>Cove</div>
-            <div class="tile tile-special" id="t7">SAFETY<br>AUDIT</div>
-            <div class="tile" id="t6">Complexo<br>Court</div>
-            <div id="piecesContainer"></div>
-        </div>
-        <div class="center-ui">
-            <div class="dice-container" onclick="rollDice()">
-                <div id="dice" class="dice">
-                    <div class="dice-face face-1">1</div><div class="dice-face face-2">2</div><div class="dice-face face-3">3</div>
-                </div>
-            </div>
-            <h3 id="statusLabel" style="margin:0; color:var(--accent); text-transform: uppercase; font-size: 0.9rem;">WAITING...</h3>
-            <p id="feedback" style="font-size: 0.75rem; color: #94a3b8; margin: 8px 0; min-height: 18px;">Roll to proceed!</p>
-            <button id="rollBtn" class="btn btn-roll" onclick="rollDice()">ROLL DICE</button>
-        </div>
-        <div id="dashboard" style="display: flex; background: rgba(0,0,0,0.4); padding: 10px; justify-content: space-around;"></div>
-    </div>
-</div>
-
-<div class="overlay" id="qOverlay">
-    <div class="q-card">
-        <h3 id="overlayTitle" style="color:var(--accent); margin-top:0;">ANALYSIS TASK</h3>
-        <p id="qText" style="font-size: 1rem; line-height: 1.4; margin-bottom: 15px;"></p>
-        <button id="hintBtn" class="btn btn-hint" onclick="useHint()">💡 UNLOCK HINT (-20 PTS)</button>
-        <div id="optionsArea"></div>
-    </div>
-</div>
-
-<div class="overlay" id="victoryOverlay">
-    <div class="q-card" style="border-color: var(--gold); border-width: 4px;">
-        <h1 style="color:var(--gold); margin:0;">🏆 SUCCESS!</h1>
-        <p>Winner:</p>
-        <h2 id="winnerName" style="color:white; font-size: 1.8rem; margin: 5px 0;">-</h2>
-        <div id="finalRankings" style="text-align: left; margin: 15px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; font-size: 0.85rem;"></div>
-        <button class="btn btn-start" onclick="location.reload()">NEW RESEARCH</button>
-    </div>
-</div>
-
-<script>
-    const sounds = {
-        roll: new Audio('https://www.soundjay.com/buttons/button-27.mp3'),
-        correct: new Audio('https://www.soundjay.com/buttons/button-3.mp3'),
-        wrong: new Audio('https://www.soundjay.com/buttons/button-10.mp3'),
-        win: new Audio('https://www.soundjay.com/human/cheering-01.mp3'),
-        jail: new Audio('https://www.soundjay.com/misc/sounds/fail-trombone-01.mp3')
-    };
-    function playSound(type) { sounds[type].currentTime = 0; sounds[type].play().catch(() => {}); }
-
-    const questions = [
-        // LVL 1
-        { lvl: 1, text: "Definition of Molarity (M)?", options: ["Moles per Liter Solution", "Moles per Kg Solvent", "Grams per Liter", "Volume/Volume %"], correct: "Moles per Liter Solution", hint: "SoluTION." },
-        { lvl: 1, text: "Definition of Molality (m)?", options: ["Moles per Liter", "Moles per Kg Solvent", "Grams per mL", "Weight/Weight %"], correct: "Moles per Kg Solvent", hint: "SolVENT mass." },
-        { lvl: 1, text: "In titration, the known concentration reagent is:", options: ["Titrand", "Titrant", "Analyte", "Indicator"], correct: "Titrant", hint: "In the burette." },
-        { lvl: 1, text: "Substance being analyzed is the:", options: ["Titrant", "Titrand", "Standard", "Base"], correct: "Titrand", hint: "The analyte." },
-        { lvl: 1, text: "Unit unaffected by temperature?", options: ["Molarity", "Molality", "Normality", "Formality"], correct: "Molality", hint: "Mass doesn't expand." },
-        { lvl: 1, text: "Geometry of SO2?", options: ["Linear", "Bent", "Tetrahedral", "T-shaped"], correct: "Bent", hint: "V-shape." },
-        { lvl: 1, text: "Geometry of BF3?", options: ["Linear", "Trigonal Planar", "Tetrahedral", "Bent"], correct: "Trigonal Planar", hint: "Triangle flat." },
-        { lvl: 1, text: "Valence electrons in Phosphorus?", options: ["3", "4", "5", "6"], correct: "5", hint: "Group 15." },
-        { lvl: 1, text: "Grams of NaOH (MW:40) for 1.5L of 0.1M?", options: ["4g", "6g", "8g", "10g"], correct: "6g", hint: "0.1 * 1.5 * 40." },
-        { lvl: 1, text: "Moles in 2L of 0.5M Glucose?", options: ["0.5", "1.0", "1.5", "2.0"], correct: "1.0", hint: "0.5 * 2." },
-        // LVL 2
-        { lvl: 2, text: "Chromatography separates based on:", options: ["Light", "Differential Distribution", "Mass", "Magnetism"], correct: "Differential Distribution", hint: "Stationary vs Mobile." },
-        { lvl: 2, text: "Spectroscopy studies matter and:", options: ["Pressure", "EM Radiation", "Gravity", "Volume"], correct: "EM Radiation", hint: "Light/Absorption." },
-        { lvl: 2, text: "Indicator for Strong Acid vs Weak Base?", options: ["Phenolphthalein", "Methyl Orange", "Litmus", "Starch"], correct: "Methyl Orange", hint: "Acidic end point." },
-        { lvl: 2, text: "Indicator for Weak Acid vs Strong Base?", options: ["Methyl Orange", "Phenolphthalein", "Erio-T", "Murexide"], correct: "Phenolphthalein", hint: "Basic end point." },
-        { lvl: 2, text: "EDTA indicator at pH 10?", options: ["Methyl Red", "Eriochrome Black T", "Phenolphthalein", "Murexide"], correct: "Eriochrome Black T", hint: "Hardness test." },
-        { lvl: 2, text: "EDTA indicator at pH 12 (Calcium)?", options: ["Erio-T", "Murexide", "Xylenol Orange", "Starch"], correct: "Murexide", hint: "Deep purple." },
-        { lvl: 2, text: "Hybridisation of P in PCl5?", options: ["sp3", "sp3d", "sp3d2", "dsp2"], correct: "sp3d", hint: "5 pairs." },
-        { lvl: 2, text: "Hybridisation of S in SF6?", options: ["sp3d", "sp3d2", "sp3", "sp2"], correct: "sp3d2", hint: "6 pairs." },
-        { lvl: 2, text: "Ksp for Ag2SO4 is:", options: ["[Ag][SO4]", "[Ag]2[SO4]", "[Ag+]2[SO4^2-]", "[Ag][SO4]2"], correct: "[Ag+]2[SO4^2-]", hint: "Coefficients." },
-        { lvl: 2, text: "Grams Lidocaine for 200mL of 2% w/v?", options: ["2g", "4g", "6g", "8g"], correct: "4g", hint: "2 per 100." },
-        // LVL 3
-        { lvl: 3, text: "Bond order for O2+?", options: ["1.5", "2.0", "2.5", "3.0"], correct: "2.5", hint: "Anti-bonding removal." },
-        { lvl: 3, text: "Molecule that is paramagnetic?", options: ["N2", "O2", "F2", "H2"], correct: "O2", hint: "MO diagram." },
-        { lvl: 3, text: "Buffer in blood?", options: ["HCl/NaCl", "H2CO3/HCO3-", "NH3/NH4Cl", "NaOH/NaAc"], correct: "H2CO3/HCO3-", hint: "Bicarbonate." },
-        { lvl: 3, text: "If [A-] = [HA], pH equals:", options: ["7.0", "pKa", "pKb", "14.0"], correct: "pKa", hint: "log(1)=0." },
-        { lvl: 3, text: "Buffer: [A-]=0.5, [HA]=0.05, pKa=3.8. pH?", options: ["3.8", "4.3", "4.8", "5.3"], correct: "4.8", hint: "pKa + 1." },
-        { lvl: 3, text: "Chelation of EDTA to Metal is:", options: ["1:1", "1:2", "2:1", "1:6"], correct: "1:1", hint: "Hexadentate." },
-        { lvl: 3, text: "Standard to standardize EDTA:", options: ["NaOH", "ZnSO4 / CaCO3", "HCl", "KMnO4"], correct: "ZnSO4 / CaCO3", hint: "Pure salts." },
-        { lvl: 3, text: "Stationary phase in TLC?", options: ["Water", "Silica Gel", "Hexane", "Alcohol"], correct: "Silica Gel", hint: "Polar solid." },
-        { lvl: 3, text: "Rf is calculated as:", options: ["Solvent/Solute", "Solute dist / Solvent dist", "Mass/Vol", "Initial/Final"], correct: "Solute dist / Solvent dist", hint: "Ratio." },
-        { lvl: 3, text: "HPLC stands for:", options: ["High Pressure Liquid Chrom", "High Proton Liquid Chrom", "Heat Phase Chrom", "Heavy Pulse Chrom"], correct: "High Pressure Liquid Chrom", hint: "Analytical king." },
-        // EXTRA MIXED
-        { lvl: 1, text: "H2O electron geometry?", options: ["Linear", "Bent", "Tetrahedral", "Planar"], correct: "Tetrahedral", hint: "Lone pairs count." },
-        { lvl: 2, text: "Mobile phase in GC?", options: ["Water", "Inert Gas", "Silica", "Oil"], correct: "Inert Gas", hint: "Carrier gas." },
-        { lvl: 1, text: "1.0M contains 1 mole in 1 L of:", options: ["Solvent", "Solution", "Water", "Acid"], correct: "Solution", hint: "Total vol." },
-        { lvl: 3, text: "Aspirin (pKa 3.5), pH 4.5. Ratio A-/HA?", options: ["1", "10", "100", "0.1"], correct: "10", hint: "10^(4.5-3.5)." },
-        { lvl: 2, text: "Beer-Lambert Law relates Absorbance to:", options: ["Pressure", "Concentration", "Weight", "Volume"], correct: "Concentration", hint: "A=ebc." },
-        { lvl: 3, text: "UV-Vis measures transitions in:", options: ["Nucleus", "Vibrations", "Electrons", "Rotations"], correct: "Electrons", hint: "Pi to Pi*." },
-        { lvl: 1, text: "Normality (N) = Molarity x ___:", options: ["Valence", "Mass", "Volume", "Density"], correct: "Valence", hint: "Equivalents." },
-        { lvl: 2, text: "EDTA indicator at pH 5 (Acidic)?", options: ["Erio-T", "Xylenol Orange", "Murexide", "Starch"], correct: "Xylenol Orange", hint: "Acid range." },
-        { lvl: 3, text: "Isotonic solution has same osmotic pressure as:", options: ["Pure water", "Plasma", "Urine", "HCl"], correct: "Plasma", hint: "Bio-compatibility." },
-        { lvl: 2, text: "Secondary standard must be standardized against:", options: ["Analyte", "Primary Standard", "Indicator", "Water"], correct: "Primary Standard", hint: "The source of truth." }
-    ];
-
-    let allChars = [
-        { id: 0, icon: '🐱', name: 'Cat-alyst', active: false },
-        { id: 1, icon: '🐶', name: 'Dog-ma', active: false },
-        { id: 2, icon: '🦊', name: 'Fox-phate', active: false },
-        { id: 3, icon: '🐰', name: 'Bun-sen', active: false }
-    ];
-    let players = [], turn = 0, rolling = false, currentQ = null;
-
-    function togglePlayer(id) {
-        allChars[id].active = !allChars[id].active;
-        document.getElementById('card' + id).classList.toggle('selected');
-        document.getElementById('startBtn').disabled = allChars.filter(c => c.active).length < 1;
+function handleLanding(p) {
+    const tileId = p.pos;
+    if(tileId === 0) { p.pts += 100; play('correct'); endTurn(); return; }
+    
+    // Check if Tile is an AUDIT (Penalty) tile
+    if(tileNames[tileId] === "AUDIT") {
+        p.pts -= 40;
+        alert("🚨 Safety Violation! -40 PTS");
+        endTurn();
+        return;
     }
 
-    function startGame() {
-        players = allChars.filter(c => c.active).map(c => ({ ...c, pos: 0, pts: 0, jail: 0 }));
-        document.getElementById('screen-lobby').style.display = 'none';
-        document.getElementById('screen-game').style.display = 'block';
-        const dash = document.getElementById('dashboard');
-        players.forEach((p, idx) => {
-            const piece = document.createElement('div');
-            piece.id = 'piece' + p.id; piece.className = 'player-piece';
-            piece.innerText = p.icon; document.getElementById('piecesContainer').appendChild(piece);
-            const stat = document.createElement('div');
-            stat.id = 'stat' + idx; stat.className = 'p-stat' + (idx === 0 ? ' active-turn' : '');
-            stat.innerHTML = `<span>${p.icon}</span><br><b id="pts${idx}">0</b>`;
-            dash.appendChild(stat);
-        });
-        updateStatus(); updatePieces();
-    }
-
-    function rollDice() {
-        if (rolling) return;
-        let p = players[turn];
-        if (p.jail > 0) {
-            document.getElementById('feedback').innerText = `${p.icon} is in Quarantine! Turns left: ${p.jail}`;
-            p.jail--;
-            setTimeout(endTurn, 1000);
-            return;
-        }
-        rolling = true; playSound('roll');
-        const dice = document.getElementById('dice'); dice.classList.add('rolling');
-        const roll = Math.floor(Math.random() * 3) + 1;
+    // Check if Tile is OWNED by someone else
+    if(owners[tileId] !== undefined && owners[tileId] !== turn){
+        let owner = players[owners[tileId]];
+        let rent = 60;
+        
+        // 1. Transfer Point to Owner
+        p.pts -= rent;
+        owner.pts += rent;
+        alert(`🏠 LANDED ON OWNED LAND! Paid ${rent} PTS to ${owner.icon}`);
+        
+        // 2. Structural Penalty Question
         setTimeout(() => {
-            dice.classList.remove('rolling');
-            dice.style.transform = roll === 1 ? "rotateY(0deg)" : roll === 2 ? "rotateY(180deg)" : "rotateY(-90deg)";
-            setTimeout(() => { movePlayer(roll); rolling = false; }, 600);
+            alert(`🧪 STRUCTURAL AUDIT: Answer correctly or lose 30 extra PTS!`);
+            showQuestion(tileId, p, true); // Added 'true' for penalty mode
         }, 800);
+        
+    } else {
+        // Tile is unowned or owned by the player themselves
+        showQuestion(tileId, p, false);
     }
+}
 
-    function movePlayer(steps) {
-        let p = players[turn]; p.pos = (p.pos + steps) % 12;
-        updatePieces(); setTimeout(() => handleLanding(p), 600);
-    }
-
-    function handleLanding(p) {
-        const boardMap = [{t:'go'},{t:'q',l:1},{t:'q',l:1},{t:'audit'},{t:'q',l:2},{t:'q',l:2},{t:'q',l:2},{t:'audit'},{t:'q',l:2},{t:'q',l:3},{t:'q',l:3},{t:'q',l:1}];
-        const land = boardMap[p.pos];
-        if (land.t === 'go') { p.pts += 100; playSound('correct'); document.getElementById('feedback').innerText = "+100 PTS for passing GO!"; endTurn(); }
-        else if (land.t === 'audit') {
-            const bad = Math.random() > 0.6;
-            if (bad) {
-                p.jail = 1; playSound('jail');
-                document.getElementById('feedback').innerText = "Safety Violation! Go to Quarantine (Skip 1 Turn)";
+function showQuestion(tid, p, isPenalty){
+    // Filter questions (You can filter by lvl if you want specifically Structural)
+    const q = questions[Math.floor(Math.random()*questions.length)];
+    
+    document.getElementById('qOverlay').style.display = 'flex';
+    document.getElementById('qHeader').innerText = isPenalty ? "STRUCTURAL PENALTY" : "RESEARCH TASK";
+    document.getElementById('qText').innerHTML = q.text;
+    
+    const area = document.getElementById('optionsArea'); 
+    area.innerHTML = '';
+    
+    q.options.forEach(opt => {
+        const b = document.createElement('button'); 
+        b.className = 'btn-mcq'; 
+        b.innerHTML = opt;
+        b.onclick = () => {
+            if(opt === q.correct){
+                play('correct');
+                if(!isPenalty && owners[tid] === undefined){
+                    owners[tid] = turn;
+                    document.getElementById('t'+tid).innerHTML += `<span class="owner-tag">${p.icon}</span>`;
+                } else if(!isPenalty) {
+                    p.pts += 30; // Reward for correct answer on own/free land
+                }
+                alert("Correct! Task Successful.");
             } else {
-                p.pts += 40; playSound('correct');
-                document.getElementById('feedback').innerText = "Clean Audit! Bonus +40 PTS";
+                play('wrong');
+                if(isPenalty){
+                    p.pts -= 30; // Additional penalty for failing the audit
+                    alert("FAILED AUDIT: Lost 30 extra PTS.");
+                }
             }
+            document.getElementById('qOverlay').style.display = 'none';
+            checkWin();
             endTurn();
-        } else { showQuestion(land.l, p); }
-    }
-
-    function showQuestion(lvl, p) {
-        const pool = questions.filter(q => q.lvl === lvl);
-        currentQ = pool[Math.floor(Math.random() * pool.length)] || questions;
-        document.getElementById('qText').innerHTML = currentQ.text;
-        document.getElementById('qOverlay').style.display = 'flex';
-        document.getElementById('hintBtn').style.display = 'block';
-        const area = document.getElementById('optionsArea'); area.innerHTML = '';
-        currentQ.options.forEach(opt => {
-            const b = document.createElement('button');
-            b.className = "btn-mcq"; b.innerHTML = opt;
-            b.onclick = () => {
-                if(opt === currentQ.correct){ p.pts += 50; playSound('correct'); }
-                else { p.pts -= 20; playSound('wrong'); }
-                document.getElementById('qOverlay').style.display = 'none';
-                checkWin(); endTurn();
-            };
-            area.appendChild(b);
-        });
-    }
-
-    function useHint() {
-        if(players[turn].pts >= 20) {
-            players[turn].pts -= 20;
-            document.getElementById('qText').innerHTML += `<br><small style="color:var(--gold)">HINT: ${currentQ.hint}</small>`;
-            document.getElementById('hintBtn').style.display = 'none';
-            document.getElementById('pts'+turn).innerText = players[turn].pts;
-        }
-    }
-
-    function checkWin() {
-        players.forEach(p => { if(p.pts >= 800) { playSound('win'); document.getElementById('victoryOverlay').style.display='flex'; document.getElementById('winnerName').innerText = p.icon + " " + p.name; } });
-    }
-
-    function endTurn() {
-        document.getElementById('pts'+turn).innerText = players[turn].pts;
-        document.getElementById('stat'+turn).classList.remove('active-turn');
-        document.getElementById('piece'+players[turn].id).classList.toggle('quarantined', players[turn].jail > 0);
-        turn = (turn+1)%players.length;
-        document.getElementById('stat'+turn).classList.add('active-turn');
-        updateStatus();
-    }
-
-    function updateStatus() { document.getElementById('statusLabel').innerText = players[turn].name + (players[turn].jail > 0 ? " (QUARANTINED)" : "'S TURN"); }
-
-    function updatePieces() {
-        players.forEach((p, i) => {
-            const tile = document.getElementById('t' + p.pos);
-            const piece = document.getElementById('piece' + p.id);
-            if(tile && piece) {
-                piece.style.left = (tile.offsetLeft + (i%2)*15 + 5) + 'px';
-                piece.style.top = (tile.offsetTop + Math.floor(i/2)*15 + 5) + 'px';
-            }
-        });
-    }
-</script>
-</body>
-</html>
+        };
+        area.appendChild(b);
+    });
+}
